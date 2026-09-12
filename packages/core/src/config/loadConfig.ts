@@ -26,6 +26,7 @@ export type EnvConfig = {
   routerAddress: Address;
   factoryAddress: Address;
   flashblocksWsUrl: string;
+  speculosTransportUrl: string;
 };
 
 const requiredAddress = /^0x[a-fA-F0-9]{40}$/;
@@ -53,5 +54,6 @@ export function loadEnvConfig(): EnvConfig {
     routerAddress: requireAddressEnv("HUSKY_AGENT_ROUTER_ADDRESS"),
     factoryAddress: requireAddressEnv("HUSKY_AGENT_FACTORY_ADDRESS"),
     flashblocksWsUrl: requireEnv("HSK_FLASHBLOCKS_WS_URL"),
+    speculosTransportUrl: requireEnv("SPECULOS_TRANSPORT_URL"),
   };
 }
