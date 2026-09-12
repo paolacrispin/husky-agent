@@ -1,0 +1,10 @@
+{
+  "name": "@husky-agent/contracts",
+  "private": true,
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "deploy:testnet": "forge script script/Deploy.s.sol:Deploy --rpc-url $HSK_TESTNET_RPC_URL --broadcast --legacy",
+    "seed:testnet": "forge script script/Seed.s.sol:Seed --rpc-url $HSK_TESTNET_RPC_URL --broadcast --legacy"
+  }
+}

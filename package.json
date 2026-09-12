@@ -1,0 +1,8 @@
+{
+  "name": "husky-agent",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

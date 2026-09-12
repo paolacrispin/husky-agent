@@ -1,69 +1,69 @@
-# Maki — Instrucciones de proyecto para Claude Code
+# Husky-Agent — Project instructions for Claude Code
 
-Maki es un agente de IA tipo terminal que interpreta instrucciones en lenguaje natural
-("envía X a Y", "haz swap de A a B") para operaciones DeFi cotidianas en HashKey Chain
-Testnet. Este archivo es el punto de entrada — léelo siempre primero. Los detalles de
-cada dominio viven en `docs/`, cárgalos según la tarea:
+Husky-Agent is a terminal-based AI agent that interprets natural-language instructions
+("send X to Y", "swap A for B") into everyday DeFi operations on HashKey Chain
+Testnet. This file is the entry point — always read it first. The details for each
+domain live in `docs/`; load them based on the task at hand:
 
-| Tarea en la que estás trabajando | Lee |
+| Task you're working on | Read |
 |---|---|
-| Entender el problema, el pitch, los criterios de juicio | `docs/00-vision.md` |
-| Tocar cualquier parte del pipeline (interpretar→enviar) | `docs/01-architecture.md` |
-| Escribir/editar contratos Solidity (AMM) | `docs/02-contracts-spec.md` |
-| Tocar las tools que el LLM puede invocar | `docs/03-agent-tools-spec.md` |
-| Tocar el motor de políticas o el resumen determinístico | `docs/04-security-policy-spec.md` |
-| Tocar firma, transporte, Ledger/Speculos | `docs/05-signing-spec.md` |
-| Tocar estructura del repo, scripts, env vars | `docs/06-repo-and-tooling.md` |
-| Preparar o validar la demo | `docs/07-demo-script.md` |
-| Datos específicos de HashKey Chain (RPC, chain ID, docs oficiales) | `skill.md` (ya existente, no tocar sin confirmar) |
+| Understanding the problem, the pitch, the judging criteria | `docs/00-vision.md` |
+| Touching any part of the pipeline (interpret→send) | `docs/01-architecture.md` |
+| Writing/editing Solidity contracts (AMM) | `docs/02-contracts-spec.md` |
+| Touching the tools the LLM can invoke | `docs/03-agent-tools-spec.md` |
+| Touching the policy engine or the deterministic summary | `docs/04-security-policy-spec.md` |
+| Touching signing, transport, Ledger/Speculos | `docs/05-signing-spec.md` |
+| Touching repo structure, scripts, env vars | `docs/06-repo-and-tooling.md` |
+| Preparing or validating the demo | `docs/07-demo-script.md` |
+| HashKey Chain–specific data (RPC, chain ID, official docs) | `hskchain/SKILL.md` and `hskchain/references/` (already exist, don't touch without confirming) |
 
-## Principio no negociable
+## Non-negotiable principle
 
-**El LLM nunca firma ni construye calldata.** El modelo solo interpreta intención y
-elige qué tool invocar con qué parámetros extraídos del lenguaje natural. Todo lo demás
-—resolución de direcciones, construcción de transacciones, chequeo de política, firma—
-es código determinístico, sin LLM en el loop. Si una tarea requiere que el LLM "decida"
-un monto, una dirección o un parámetro de transacción sin que haya pasado por el
-resolver determinístico, detente y pregunta antes de implementarlo así.
+**The LLM never signs or builds calldata.** The model only interprets intent and
+chooses which tool to invoke with which parameters extracted from natural language.
+Everything else — address resolution, transaction construction, policy checking,
+signing — is deterministic code, with no LLM in the loop. If a task requires the LLM
+to "decide" an amount, an address, or a transaction parameter without it passing
+through the deterministic resolver, stop and ask before implementing it that way.
 
-## Alcance de v1 (hackathon) — no negociable salvo instrucción explícita
+## v1 scope (hackathon) — non-negotiable except by explicit instruction
 
-- Operaciones soportadas: **transferencia de tokens** y **swap** (vía el AMM propio).
-  Nada más (no lending, no staking, no NFTs, no multi-step composability).
-- Una sola chain: **HashKey Chain Testnet (chain ID 133)**. No multi-chain.
-- Firma: **solo Ledger vía Speculos** (emulador). No Secure Enclave, no otros signers.
-- Sin World AgentKit ni ninguna capa de "prueba de humanidad". Fuera de alcance.
-- Aprobación humana: **siempre requerida**, sin excepciones ni umbrales de
-  auto-aprobación. No implementes lógica de auto-aprobación aunque parezca una mejora
-  razonable — es una decisión de producto explícita, no un descuido.
-- Resolución de direcciones: contactos locales (`contacts.json`) primero, con fallback
-  a una dirección `0x...` pasada directamente. No implementes ENS ni ningún resolver
-  externo.
-- Feedback de UX vía Flashblocks de HSK testnet (preconfirmaciones ~200ms por
-  websocket) sí está en alcance, como capa de UX aislada del pipeline de seguridad
-  (ver `01-architecture.md`). Regla dura: el estado "preconfirmado" nunca se presenta
-  como equivalente a "confirmado/final" — deben ser visual y textualmente distintos en
-  toda la UI.
+- Supported operations: **token transfer** and **swap** (via the project's own AMM).
+  Nothing else (no lending, no staking, no NFTs, no multi-step composability).
+- A single chain: **HashKey Chain Testnet (chain ID 133)**. No multi-chain.
+- Signing: **Ledger via Speculos only** (emulator). No Secure Enclave, no other
+  signers.
+- No World AgentKit and no "proof of humanity" layer of any kind. Out of scope.
+- Human approval: **always required**, no exceptions and no auto-approval thresholds.
+  Do not implement auto-approval logic even if it seems like a reasonable
+  improvement — it's an explicit product decision, not an oversight.
+- Address resolution: local contacts (`contacts.json`) first, falling back to a
+  directly supplied `0x...` address. Do not implement ENS or any external resolver.
+- UX feedback via HSK testnet Flashblocks (~200ms preconfirmations over websocket)
+  is in scope, as a UX layer isolated from the security pipeline (see
+  `01-architecture.md`). Hard rule: the "preconfirmed" state must never be presented
+  as equivalent to "confirmed/final" — they must be visually and textually distinct
+  throughout the UI.
 
-## No-goals explícitos (para evitar scope creep)
+## Explicit non-goals (to avoid scope creep)
 
-- World AgentKit / prueba de humanidad — cortado del proyecto.
-- Account Abstraction (ERC-4337) — descartado por falta de bundler confiable en HSK
-  testnet (ver `docs/00-vision.md` para el detalle de la investigación).
-- Cualquier chain que no sea HashKey Chain Testnet.
-- Auto-aprobación de transacciones bajo cualquier umbral.
-- Hardware wallet físico — el proyecto usa Speculos exclusivamente; el código de firma
-  debe estar escrito de forma que apuntar a un Ledger físico sea un cambio de
-  configuración de transporte, no de lógica (ver `docs/05-signing-spec.md`).
+- World AgentKit / proof of humanity — cut from the project.
+- Account Abstraction (ERC-4337) — dropped due to the lack of a reliable bundler on
+  HSK testnet (see `docs/00-vision.md` for the research details).
+- Any chain other than HashKey Chain Testnet.
+- Auto-approval of transactions under any threshold.
+- Physical hardware wallet — the project uses Speculos exclusively; the signing code
+  must be written so that pointing at a physical Ledger is a transport configuration
+  change, not a logic change (see `docs/05-signing-spec.md`).
 
-## Convenciones
+## Conventions
 
-- TypeScript estricto (`strict: true`) en todo el código del agente/wallet.
-- Contratos en Solidity con Foundry (ver `docs/02-contracts-spec.md`).
-- Cualquier función que reciba un monto o una dirección proveniente del LLM debe
-  validarse con un schema (zod o similar) antes de tocar el resolver.
-- No commitear claves privadas ni mnemonics reales. Solo el mnemonic de testnet
-  documentado en `docs/05-signing-spec.md`.
-- Antes de dar por terminada una tarea que toque el motor de políticas o la firma,
-  señala explícitamente qué se probó y qué no — ese código es el de mayor riesgo del
-  proyecto.
+- Strict TypeScript (`strict: true`) across all agent/wallet code.
+- Contracts in Solidity with Foundry (see `docs/02-contracts-spec.md`).
+- Any function that receives an amount or an address coming from the LLM must be
+  validated with a schema (zod or similar) before it touches the resolver.
+- Never commit real private keys or mnemonics. Only the testnet mnemonic documented
+  in `docs/05-signing-spec.md`.
+- Before considering a task that touches the policy engine or signing as done,
+  explicitly state what was tested and what wasn't — that code is the highest-risk
+  code in the project.
