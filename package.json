@@ -10,7 +10,9 @@
     "dev": "pnpm --filter @husky-agent/agent dev",
     "test": "pnpm --filter @husky-agent/agent test",
     "typecheck": "pnpm --filter @husky-agent/agent typecheck",
-    "speculos:start": "bash scripts/speculos-start.sh",
-    "speculos:stop": "bash scripts/speculos-stop.sh"
+    "speculos:start": "node scripts/speculos.mjs start",
+    "speculos:stop": "node scripts/speculos.mjs stop",
+    "speculos:logs": "node scripts/speculos.mjs logs",
+    "speculos:status": "node scripts/speculos.mjs status"
   }
 }

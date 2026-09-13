@@ -1,0 +1,55 @@
+# Speculos — the Ledger emulator every signing path in this project is developed
+# against. See ledger.md for what it is and why we use it.
+#
+#   pnpm speculos:start     # boots this and waits until the device can sign
+#   pnpm speculos:stop
+#   pnpm speculos:logs
+#
+# Prefer the pnpm scripts over calling `docker compose` directly: they read
+# .env.testnet and supply SPECULOS_SEED, which this file requires.
+#
+# Three things are worth knowing before editing this file:
+#
+#   1. The image ships no apps (its .dockerignore excludes `apps/`), so the
+#      Ethereum firmware is mounted in from ./apps.
+#   2. Speculos looks for its NVRAM file in the *working directory*, which is why
+#      working_dir points at the mount. Without that, --save-nvram writes into
+#      the container's throwaway layer and the blind-signing setting is lost on
+#      every restart.
+#   3. The seed comes from TESTNET_MNEMONIC in .env.testnet, so the emulated
+#      device derives the same account the project already funds and documents.
+#      Speculos' built-in default seed would silently produce a different,
+#      empty address.
+#
+# Ports are bound to 127.0.0.1 on purpose: the emulator is a signing device and
+# has no business being reachable from the network.
+
+services:
+  speculos:
+    image: ghcr.io/ledgerhq/speculos:latest
+    container_name: husky-speculos
+
+    ports:
+      - "127.0.0.1:5000:5000" # REST API + web screen (human approval)
+      # APDU — what packages/signer reaches via SPECULOS_TRANSPORT_URL.
+      - "127.0.0.1:${SPECULOS_APDU_PORT:-40000}:40000"
+
+    volumes:
+      - ./apps:/speculos/apps
+
+    working_dir: /speculos/apps
+
+    # Run as the host user so main_nvram.bin does not come back root-owned.
+    user: "${SPECULOS_UID:-1000}:${SPECULOS_GID:-1000}"
+
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        exec python /speculos/speculos.py
+        --display headless
+        --api-port 5000
+        --apdu-port 40000
+        --model nanox
+        --seed "${SPECULOS_SEED:?SPECULOS_SEED is not set - run this via 'pnpm speculos:start'}"
+        ${SPECULOS_NVRAM_FLAGS:---load-nvram --save-nvram}
+        "nanox#ethereum#1.22.3.elf"

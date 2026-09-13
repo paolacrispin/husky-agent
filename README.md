@@ -38,7 +38,7 @@ package's `dist` output.
 
 ## CLI identity
 
-Husky Agent uses an original blue-and-ice terminal mark, the `husky-agent`
+Husky Agent uses an original purple-and-white terminal mark, the `husky-agent`
 title, a versioned status label, and `/about` for the current shell status and
 examples. Runtime state is kept under `~/.husky-agent/agent`.
 
