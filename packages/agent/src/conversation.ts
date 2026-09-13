@@ -14,7 +14,7 @@ export class Conversation {
     this.messages.push({ role: "user", content: firstUserMessage });
   }
 
-  /** Call after a `needsClarification` result, with Claude's question and the user's reply. */
+  /** Call after a `needsClarification` result, with the model's question and the user's reply. */
   addClarificationTurn(assistantMessage: string, userReply: string): void {
     this.messages.push({ role: "assistant", content: assistantMessage });
     this.messages.push({ role: "user", content: userReply });

@@ -16,7 +16,7 @@ export function parseSpeculosUrl(url: string): { host: string; apduPort: number 
 
 /**
  * Creates a Signer backed by the Speculos emulator. This is the only
- * transport used in v1 — see docs/05-signing-spec.md and CLAUDE.md's
+ * transport used in v1 — see docs/05-signing-spec.md and AGENTS.md's
  * non-goals (no physical hardware in scope).
  */
 export async function createSpeculosSigner(
@@ -30,7 +30,7 @@ export async function createSpeculosSigner(
 
 /**
  * Creates a Signer backed by a physical Ledger over USB/HID. Out of scope
- * for v1 (CLAUDE.md non-goals), but exists to prove the abstraction holds:
+ * for v1 (AGENTS.md non-goals), but exists to prove the abstraction holds:
  * swapping Speculos for real hardware is a transport change, not a logic
  * change. Not exercised by any test in this repo.
  */

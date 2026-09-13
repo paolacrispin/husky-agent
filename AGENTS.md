@@ -1,4 +1,4 @@
-# Husky-Agent — Project instructions for Claude Code
+# Husky-Agent — Project instructions for coding agents
 
 Husky-Agent is a terminal-based AI agent that interprets natural-language instructions
 ("send X to Y", "swap A for B") into everyday DeFi operations on HashKey Chain
@@ -41,7 +41,7 @@ through the deterministic resolver, stop and ask before implementing it that way
   directly supplied `0x...` address. Do not implement ENS or any external resolver.
 - UX feedback via HSK testnet Flashblocks (~200ms preconfirmations over websocket)
   is in scope, as a UX layer isolated from the security pipeline (see
-  `01-architecture.md`). Hard rule: the "preconfirmed" state must never be presented
+  `docs/01-architecture.md`). Hard rule: the "preconfirmed" state must never be presented
   as equivalent to "confirmed/final" — they must be visually and textually distinct
   throughout the UI.
 

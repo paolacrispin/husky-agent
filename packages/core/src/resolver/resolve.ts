@@ -6,7 +6,7 @@ export class ResolutionError extends Error {}
 /**
  * Resolves a `recipient` string (from the transfer tool call) to an address.
  * Contacts first, then a direct 0x address — see docs/03-agent-tools-spec.md.
- * No ENS, no external resolver, by explicit non-goal in CLAUDE.md.
+ * No ENS, no external resolver, by explicit non-goal in AGENTS.md.
  */
 export function resolveRecipient(
   recipient: string,

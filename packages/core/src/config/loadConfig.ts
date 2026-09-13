@@ -5,7 +5,7 @@ import type { Contacts, Tokens } from "../types/index.js";
 
 /**
  * Loads and validates contacts.json / tokens.json from disk. Both files are
- * plain config, never LLM input — but CLAUDE.md's schema-validation
+ * plain config, never LLM input — but AGENTS.md's schema-validation
  * convention still applies to anything that ends up feeding the resolver.
  */
 export function loadContacts(path: string): Contacts {

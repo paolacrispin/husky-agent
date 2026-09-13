@@ -13,7 +13,7 @@ export type FlashblocksHandle = {
  * Flashblocks" section. Never treat `onPreconfirmed` as finality: the caller
  * must still wait for a normal RPC receipt.
  *
- * Per the non-negotiable UX rule in CLAUDE.md, any error or unexpected close
+ * Per the non-negotiable UX rule in AGENTS.md, any error or unexpected close
  * degrades silently — `onError` is informational only, it must never be
  * surfaced as if the underlying operation failed.
  */
