@@ -2,11 +2,14 @@
   "name": "husky-agent",
   "private": true,
   "engines": {
-    "node": ">=20"
+    "node": ">=22.19.0"
   },
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "build": "pnpm --filter @husky-agent/core --filter @husky-agent/agent --filter @husky-agent/signer --filter @husky-agent/flashblocks run build",
+    "dev": "pnpm --filter @husky-agent/agent dev",
+    "test": "pnpm --filter @husky-agent/agent test",
+    "typecheck": "pnpm --filter @husky-agent/agent typecheck",
     "speculos:start": "bash scripts/speculos-start.sh",
     "speculos:stop": "bash scripts/speculos-stop.sh"
   }

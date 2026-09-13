@@ -1,97 +1,69 @@
-# Husky-Agent
+# Husky Agent
 
-A terminal agent that turns plain-English instructions — *"send 10 USDC to alice"*,
-*"swap 5 HSK for USDC"* — into real DeFi operations on **HashKey Chain Testnet**
-(chain ID 133).
+Husky Agent is a Husky-branded terminal assistant for clear, safe interaction
+with future HSKChain integrations. The `packages/agent` workspace package is
+the complete `husky-agent` CLI application shell, built on the Earendil Pi
+coding-agent runtime.
 
-Husky-Agent is a customized agent built on top of the **[Pi Agent
-Harness](https://github.com/earendil-works/pi)**. Pi is agent- and
-provider-agnostic: it exposes a unified LLM API over a catalog of agents and
-providers, so this project can be driven by Claude, Codex, DeepSeek, or any other
-agent Pi supports — without changing application code.
+The model interprets intent and can explain what an integration would need. The
+Husky wallet, balances, policy, transaction, and health surfaces currently
+return honest `not_connected` placeholder results. Transfer and swap are
+non-executing placeholders: Husky Agent does not sign, submit, or confirm
+transactions at this stage.
 
-## What it does
+## Setup
 
-Two operations, on one chain, with a human in the loop for every one of them:
+Node.js 22.19 or newer is required by the Earendil Pi 0.85.1 runtime.
 
-- **Transfer** a token to a contact or a `0x` address.
-- **Swap** between two tokens through the project's own AMM.
-
-Signing happens on a **Ledger emulator (Speculos)**. Nothing is ever signed or sent
-without an explicit approval at the terminal.
-
-## How it works
-
-```
-natural language
-      │
-      ▼
-  interpret            the model picks one tool: transfer or swap
-      │
-      ▼
-  resolve              alias or 0x address → address, no external resolver
-      │
-      ▼
-  build                deterministic calldata for the router
-      │
-      ▼
-  policy + simulate    allowlists, approve rules, fee estimate
-      │
-      ▼
-  summary              what you are about to sign, in plain English
-      │
-      ▼
-  approve → sign       Speculos; nothing is auto-approved
-      │
-      ▼
-  send → confirm       real receipt, with Flashblocks preconfirmations as UX only
+```bash
+cp .env.example .env
+$EDITOR .env                    # set DEEPSEEK_API_KEY
+pnpm install
+pnpm --filter @husky-agent/agent build
+pnpm --filter @husky-agent/agent dev
 ```
 
-**The model interprets intent and nothing else.** It never signs, never builds
-calldata, and never invents an amount, an address, or a transaction parameter.
-Everything downstream of the interpretation step is deterministic code with no model
-in the loop, and anything the model returns is schema-validated before it reaches the
-resolver.
+The default configuration is DeepSeek V4 Flash:
+
+```text
+HUSKY_AGENT_PROVIDER=deepseek
+HUSKY_AGENT_MODEL=deepseek-v4-flash
+```
+
+The CLI reads `DEEPSEEK_API_KEY`, `HUSKY_AGENT_PROVIDER`, and
+`HUSKY_AGENT_MODEL` from the workspace `.env` or the process environment. Pi
+CLI arguments such as `--provider` and `--model` take precedence over the
+defaults. After a build, the binary is available as `husky-agent` from the
+package's `dist` output.
+
+## CLI identity
+
+Husky Agent uses an original blue-and-ice terminal mark, the `husky-agent`
+title, a versioned status label, and `/about` for the current shell status and
+examples. Runtime state is kept under `~/.husky-agent/agent`.
 
 ## Packages
 
 | Package | Role |
 |---|---|
-| `packages/agent` | Interpretation layer: tools, system prompt, model call |
-| `packages/core` | Resolver, builder, policy engine, simulation, summary |
-| `packages/signer` | Ledger/Speculos signing, transport-agnostic |
-| `packages/flashblocks` | HashKey Flashblocks preconfirmation feed (UX layer) |
-| `packages/contracts` | Solidity AMM (factory, pair, router) + Foundry tests |
-| `packages/cli` | The terminal application that wires it all together |
+| `packages/agent` | The full Husky Agent CLI application, extension registrations, prompt, and safe tool placeholders |
+| `packages/core` | External chain-preparation interface for a future adapter |
+| `packages/signer` | External signer and transport interface for a future adapter |
+| `packages/flashblocks` | External live-status interface for a future adapter |
+| `packages/contracts` | External contract package |
+| `packages/cli` | Legacy chain-wiring reference; not used by `husky-agent` yet |
 
-## Getting started
+The chain-owned packages remain separate so their contracts and HSK behavior can
+be connected in a later integration step.
+
+## Development commands
 
 ```bash
-pnpm install
 pnpm run build
-cp .env.testnet.example .env    # then fill it in
+pnpm run dev
+pnpm run test
+pnpm run typecheck
 ```
 
-You will need a HashKey testnet RPC endpoint, the deployed router and factory
-addresses, a credential for whichever provider the agent is configured to use, and
-Speculos running for signing.
-
-## Configuration
-
-`.env.testnet.example` is the annotated list of everything the CLI reads. The
-interpretation model is selected as `<provider>:<model>`, so switching agents is a
-configuration change rather than a code change:
-
-```bash
-HUSKY_AGENT_MODEL=<provider>:<model>
-```
-
-## Project conventions
-
-Contributor and agent instructions live in [`AGENTS.md`](AGENTS.md) — read it first.
-The per-domain specs are in `docs/`.
-
-## Status
-
-Hackathon work in progress. Scope is deliberately narrow: transfer and swap on
-HashKey Chain Testnet, and nothing else yet.
+The current CLI shell intentionally stops at model interpretation and adapter
+status. It does not claim to execute operations.
