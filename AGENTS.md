@@ -15,6 +15,7 @@ domain live in `docs/`; load them based on the task at hand:
 | Touching signing, transport, Ledger/Speculos | `docs/05-signing-spec.md` |
 | Touching repo structure, scripts, env vars | `docs/06-repo-and-tooling.md` |
 | Preparing or validating the demo | `docs/07-demo-script.md` |
+| Setting up the project on a new machine (a teammate onboarding) | `docs/08-getting-started.md` |
 | HashKey Chain–specific data (RPC, chain ID, official docs) | `hskchain/SKILL.md` and `hskchain/references/` (already exist, don't touch without confirming) |
 
 ## Non-negotiable principle

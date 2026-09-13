@@ -1,0 +1,4 @@
+interface:
+  display_name: "HSKChain"
+  short_description: "Build and operate EVM apps on HSKChain"
+  default_prompt: "Use $hskchain to build, test, inspect, or deploy an EVM application on HSKChain."

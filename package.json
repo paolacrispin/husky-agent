@@ -6,6 +6,8 @@
   },
   "packageManager": "pnpm@9.0.0",
   "scripts": {
-    "build": "pnpm --filter @husky-agent/core --filter @husky-agent/agent --filter @husky-agent/signer --filter @husky-agent/flashblocks run build"
+    "build": "pnpm --filter @husky-agent/core --filter @husky-agent/agent --filter @husky-agent/signer --filter @husky-agent/flashblocks run build",
+    "speculos:start": "bash scripts/speculos-start.sh",
+    "speculos:stop": "bash scripts/speculos-stop.sh"
   }
 }

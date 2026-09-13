@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .env.testnet
+.env
 contacts.json
 tokens.json
 
@@ -9,5 +10,8 @@ packages/contracts/out/
 packages/contracts/cache/
 packages/contracts/broadcast/
 
-docs/ 
-hskchain/
+# Speculos Ethereum app binary — per-developer, obtained locally, see
+# docs/08-getting-started.md. Not vendored (and the placeholder here was
+# empty/incomplete, not something worth tracking).
+assets/
+

@@ -2,5 +2,13 @@
   "HSK": {
     "address": "0x4200000000000000000000000000000000000006",
     "decimals": 18
+  },
+  "USDC": {
+    "address": "0xBCf27FB0A18111e0D21b1Fb4677F9Bc6285fA75d",
+    "decimals": 6
+  },
+  "HUSKY": {
+    "address": "0xc686b87dC49Ecd59Fd6d39a878F0964D152cB212",
+    "decimals": 18
   }
 }
