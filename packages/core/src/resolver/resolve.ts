@@ -6,7 +6,7 @@ export class ResolutionError extends Error {}
 /**
  * Resolves a `recipient` string (from the transfer tool call) to an address.
  * Contacts first, then a direct 0x address — see docs/03-agent-tools-spec.md.
- * No ENS, no external resolver, by explicit non-goal in AGENTS.md.
+ * ENS is deliberately outside the deterministic v1 resolver.
  */
 export function resolveRecipient(
   recipient: string,
@@ -31,12 +31,16 @@ export function resolveToken(symbol: string, tokens: Tokens): TokenConfig {
   if (!key) {
     throw new ResolutionError(`'${symbol}' is not a supported token.`);
   }
-  return { symbol: key, ...tokens[key] };
+  // Keep old tokens.json files working while making the native-vs-WHSK rule
+  // explicit: the HSK symbol is native for transfers, but its configured
+  // address is the WHSK ERC-20 used by swaps.
+  return { symbol: key, ...tokens[key], native: tokens[key].native === true || key.toUpperCase() === "HSK" };
 }
 
 /** Converts a human-readable amount string (e.g. "10.5") to wei/base units using the token's decimals. */
 export function resolveAmount(amount: string, decimals: number): bigint {
   try {
+    if (!/^\d+(\.\d+)?$/.test(amount)) throw new Error("invalid decimal");
     return parseUnits(amount, decimals);
   } catch {
     throw new ResolutionError(`'${amount}' is not a valid amount.`);

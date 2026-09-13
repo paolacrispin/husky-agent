@@ -22,10 +22,12 @@ export type TokenConfig = {
   symbol: string;
   address: Address;
   decimals: number;
+  /** True for the native HSK entry. Native transfers use tx.value; swaps use the configured WHSK address. */
+  native?: boolean;
 };
 
 export type Contacts = Record<string, Address>;
-export type Tokens = Record<string, { address: Address; decimals: number }>;
+export type Tokens = Record<string, { address: Address; decimals: number; native?: boolean }>;
 
 /** A single unsigned transaction, before signing. */
 export type UnsignedTx = {

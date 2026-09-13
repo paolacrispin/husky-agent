@@ -6,10 +6,10 @@
   },
   "packageManager": "pnpm@9.0.0",
   "scripts": {
-    "build": "pnpm --filter @husky-agent/core --filter @husky-agent/agent --filter @husky-agent/signer --filter @husky-agent/flashblocks run build",
+    "build": "pnpm --filter @husky-agent/core --filter @husky-agent/signer --filter @husky-agent/flashblocks --filter @husky-agent/cli --filter @husky-agent/agent run build",
     "dev": "pnpm --filter @husky-agent/agent dev",
-    "test": "pnpm --filter @husky-agent/agent test",
-    "typecheck": "pnpm --filter @husky-agent/agent typecheck",
+    "test": "pnpm --filter @husky-agent/core --filter @husky-agent/signer --filter @husky-agent/flashblocks --filter @husky-agent/cli --filter @husky-agent/agent run test",
+    "typecheck": "pnpm --filter @husky-agent/core --filter @husky-agent/signer --filter @husky-agent/flashblocks --filter @husky-agent/cli --filter @husky-agent/agent run typecheck",
     "speculos:start": "node scripts/speculos.mjs start",
     "speculos:stop": "node scripts/speculos.mjs stop",
     "speculos:logs": "node scripts/speculos.mjs logs",

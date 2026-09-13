@@ -1,114 +1,45 @@
-import { Conversation, interpret, InterpretError } from "@husky-agent/agent";
-import { prepareSwap, prepareTransfer, ResolutionError, type PipelineConfig } from "@husky-agent/core";
-import { createSpeculosSigner, healthCheckSpeculos, SignerHealthCheckError } from "@husky-agent/signer";
-import { loadAppConfig } from "./config.js";
-import { ask, askApproval, closePrompt } from "./prompt.js";
-import { sendOperation } from "./sendOperation.js";
+/**
+ * Compatibility entry point for `@husky-agent/cli`.
+ *
+ * This package used to be the terminal that owned interpretation, approval and
+ * broadcasting. That role moved to the Husky Agent shell in `packages/agent`,
+ * which runs the same deterministic pipeline from `@husky-agent/core` and
+ * `@husky-agent/signer` inside the Pi harness. The old code here imported
+ * `Conversation` / `interpret` / `InterpretError` from a build of the shell
+ * that no longer exists, so it could not even compile.
+ *
+ * Rather than resurrect a second interpreter — which would be a second path to
+ * signing, and a second thing to keep safe — this entry point refuses to run
+ * and points at the supported one.
+ */
+import { fileURLToPath } from "node:url";
 
-const MAX_CLARIFICATION_TURNS = 3;
+export const LEGACY_CLI_MESSAGE = `husky-agent: this legacy CLI has been retired.
 
-async function resolveIntent(firstInstruction: string) {
-  const conversation = new Conversation(firstInstruction);
+The supported entry point is the Husky Agent Pi shell:
 
-  for (let turn = 0; turn <= MAX_CLARIFICATION_TURNS; turn++) {
-    const intent = await interpret(conversation.history());
-    if (!("needsClarification" in intent)) return intent;
+  pnpm dev                     # from the repository root
 
-    if (turn === MAX_CLARIFICATION_TURNS) {
-      console.log(`${intent.message}\nToo many clarification attempts — cancelling this instruction.`);
-      return null;
-    }
+It runs the same deterministic prepare/approve/sign pipeline (transfer and swap
+on HashKey Chain Testnet, chain ID 133) with the terminal approval prompt and
+Ledger-via-Speculos signing. See README.md and docs/08-getting-started.md.
+`;
 
-    const reply = await ask(`${intent.message}\n> `);
-    if (reply.trim().toLowerCase() === "cancel") return null;
-    conversation.addClarificationTurn(intent.message, reply);
-  }
-  return null;
+export function runLegacyCli(): number {
+  process.stderr.write(LEGACY_CLI_MESSAGE);
+  return 1;
 }
 
-async function main() {
-  const config = loadAppConfig();
-
-  console.log("Checking Speculos...");
+/** True when this module is the process entry point rather than an import. */
+export function isDirectInvocation(argv1: string | undefined, moduleUrl: string): boolean {
+  if (!argv1) return false;
   try {
-    await healthCheckSpeculos(config.env.speculosTransportUrl);
-  } catch (error) {
-    if (error instanceof SignerHealthCheckError) {
-      console.error("Speculos isn't running, run `npm run speculos:start`");
-      process.exit(1);
-    }
-    throw error;
+    return fileURLToPath(moduleUrl) === argv1;
+  } catch {
+    return false;
   }
-
-  const signer = await createSpeculosSigner(config.env.speculosTransportUrl);
-  const fromAddress = await signer.getAddress();
-  console.log(`Ready. Signing address: ${fromAddress}\n`);
-
-  const pipelineConfig: PipelineConfig = {
-    tokens: config.tokens,
-    contacts: config.contacts,
-    publicClient: config.publicClient,
-    fromAddress,
-    routerAddress: config.env.routerAddress,
-    factoryAddress: config.env.factoryAddress,
-    allowedContracts: config.allowedContracts,
-  };
-
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const instruction = await ask("husky-agent> ");
-    if (!instruction.trim()) continue;
-    if (instruction.trim().toLowerCase() === "exit") break;
-
-    let intent;
-    try {
-      intent = await resolveIntent(instruction);
-    } catch (error) {
-      if (error instanceof InterpretError) {
-        console.error(`Sorry, I couldn't process that right now: ${error.message}`);
-        continue;
-      }
-      throw error;
-    }
-    if (!intent) continue;
-
-    try {
-      const result =
-        intent.tool === "transfer"
-          ? await prepareTransfer(intent.params, pipelineConfig)
-          : await prepareSwap(intent.params, pipelineConfig);
-
-      if (result.status === "rejected") {
-        console.log(`❌ ${result.reason}`);
-        continue;
-      }
-
-      const approved = await askApproval(result.summary);
-      if (!approved) {
-        console.log("Cancelled — nothing was signed or sent.");
-        continue;
-      }
-
-      await sendOperation(
-        result.operation,
-        signer,
-        config.publicClient,
-        config.env.chainId,
-        config.env.flashblocksWsUrl,
-      );
-    } catch (error) {
-      if (error instanceof ResolutionError) {
-        console.log(`❌ ${error.message}`);
-        continue;
-      }
-      throw error;
-    }
-  }
-
-  closePrompt();
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (isDirectInvocation(process.argv[1], import.meta.url)) {
+  process.exitCode = runLegacyCli();
+}

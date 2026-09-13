@@ -1,8 +1,9 @@
 # 08 — Getting started (onboarding a teammate)
 
-This is the practical "clone it and run it" doc. For *why* things are built this
-way, read `AGENTS.md` and the numbered specs it points to — this doc is just the
-checklist to get from a fresh clone to a running CLI.
+This is the practical "clone it and run it" doc for the active Husky Agent shell.
+For *why* things are built this way, read `AGENTS.md` and the numbered specs it
+points to — this doc is just the checklist to get from a fresh clone to a running
+agent that can transfer and swap on HashKey Chain Testnet.
 
 ## What's already done for you
 
@@ -25,12 +26,12 @@ the agent talks to — see step 4.
 
 ## 1. Prerequisites
 
-- Node.js ≥ 20 and [pnpm](https://pnpm.io/installation) (`corepack enable` is
-  enough if you have a recent Node).
+- Node.js ≥ 22.19 and [pnpm](https://pnpm.io/installation) (`corepack enable`
+  is enough if you have a recent Node).
 - [Foundry](https://getfoundry.sh) (`curl -L https://foundry.paradigm.xyz | bash
   && foundryup`) — only needed if you'll touch `packages/contracts`; not
-  required just to run the CLI against the already-deployed contracts.
-- Docker, for Speculos (the Ledger emulator) — see step 5, there's a
+  required just to run the agent against the already-deployed contracts.
+- Docker, for Speculos (the Ledger emulator) — see step 6, there's a
   permissions gotcha.
 - An API key for the model provider in `HUSKY_AGENT_MODEL` (default:
   DeepSeek — see step 4).
@@ -41,7 +42,7 @@ the agent talks to — see step 4.
 git clone <this repo> husky-agent
 cd husky-agent
 pnpm install
-pnpm build     # builds core/agent/signer/flashblocks — required before `cli dev`
+pnpm build     # core, signer, flashblocks, cli, agent — required before `pnpm dev`
 ```
 
 If you'll touch `packages/contracts`, also fetch its one dependency (gitignored,
@@ -51,13 +52,26 @@ not vendored — see `06-repo-and-tooling.md` for why `--no-git` matters here):
 (cd packages/contracts && forge install foundry-rs/forge-std --no-git --no-commit)
 ```
 
-## 3. Copy the config templates
+## 3. Copy the config templates — three files, two purposes
 
 ```bash
-cp .env.testnet.example .env.testnet
+cp .env.example .env                    # interpretation model + provider credential
+cp .env.testnet.example .env.testnet    # chain, contracts, Speculos, Flashblocks
 cp tokens.json.example tokens.json
 cp contacts.json.example contacts.json
 ```
+
+`.env` and `.env.testnet` are both loaded at startup and neither replaces the
+other:
+
+| File | Loaded by | Contents |
+|---|---|---|
+| `.env` | `packages/agent/src/config/env.ts` | `HUSKY_AGENT_PROVIDER`, `HUSKY_AGENT_MODEL`, the provider credential (`DEEPSEEK_API_KEY`, …) |
+| `.env.testnet` | `packages/agent/src/integration/config.ts` | `HSK_TESTNET_RPC_URL`, `HSK_TESTNET_CHAIN_ID`, `HUSKY_AGENT_ROUTER_ADDRESS`, `HUSKY_AGENT_FACTORY_ADDRESS`, `WHSK_ADDRESS`, `SPECULOS_TRANSPORT_URL`, `HSK_FLASHBLOCKS_WS_URL`, `TESTNET_MNEMONIC` |
+
+Shell-exported variables win over both files, so `HSK_TESTNET_CHAIN_ID=133 pnpm dev`
+behaves as expected. `HUSKY_AGENT_ROOT` overrides the repo root used to find
+these files, and `HUSKY_TESTNET_ENV_PATH` points at a different `.env.testnet`.
 
 `tokens.json` and `contacts.json` are yours to edit freely (add your own test
 contacts) — they're gitignored, so nothing you put there leaks. Add at least
@@ -66,16 +80,23 @@ by raw address (the demo script's Scenario 1 uses `"juan"`).
 
 ## 4. Fill in the one thing that's actually missing: the model credential
 
-Open `.env.testnet` and set the credential matching `HUSKY_AGENT_MODEL`
-(default `deepseek:deepseek-v4-flash`, so `DEEPSEEK_API_KEY`). If you'd rather
-use a different provider/model, change `HUSKY_AGENT_MODEL` to
-`<provider>:<model>` and set that provider's credential var instead — Pi's
-provider catalog is documented in `03-agent-tools-spec.md`. Everything else in
-`.env.testnet` can stay as-is.
+Open `.env` and set the credential matching your model — with the default,
+`DEEPSEEK_API_KEY`. Two accepted spellings for the model:
+
+```bash
+HUSKY_AGENT_PROVIDER=deepseek
+HUSKY_AGENT_MODEL=deepseek-v4-flash
+# — or, equivalently —
+HUSKY_AGENT_MODEL=deepseek:deepseek-v4-flash
+```
+
+An explicit `HUSKY_AGENT_PROVIDER` wins over a combined prefix. Any
+provider/model in Pi's catalog works; the deterministic pipeline downstream does
+not care which one answered. Everything else in `.env.testnet` can stay as-is.
 
 ## 5. Speculos (Ledger emulator)
 
-The CLI signs every transaction through Speculos — there's no path that
+The agent signs every transaction through Speculos — there's no path that
 bypasses it, even for testing. Two one-time setup steps, both outside this
 repo's control:
 
@@ -98,34 +119,52 @@ Once both are sorted:
 
 ```bash
 pnpm speculos:start
+pnpm speculos:status
 # ...
 pnpm speculos:stop
 ```
 
-## 6. Run the CLI
+## 6. Run the agent
 
 ```bash
-pnpm --filter cli dev
+pnpm dev
 ```
 
-On startup it health-checks Speculos (fails fast with a clear message if it's
-not reachable), prints the signing address, then drops into a prompt. Try:
+On startup it prints the Husky banner, then drops into a prompt. The signing
+address comes from Speculos the first time a write is prepared (and via
+`husky_wallet_status`). Try:
 
 ```
-husky-agent> send 5 USDC to juan
-husky-agent> swap 10 USDC for HUSKY
+send 5 USDC to juan
+swap 10 USDC for HUSKY
 ```
 
-Every operation shows a plain-English summary and asks `Approve? [y/N]` before
-anything is signed or sent — see `04-security-policy-spec.md` for exactly what
-that summary is built from.
+Every operation shows a deterministic, plain-English summary built from the
+decoded transaction and asks for explicit confirmation before anything is
+signed or sent — see `04-security-policy-spec.md` for exactly what that summary
+is built from. An answer that isn't an explicit yes rejects the operation.
+
+## 7. Verify the workspace
+
+```bash
+pnpm build      # five TypeScript packages, including the retired-cli stub
+pnpm typecheck  # the same packages, tests included
+pnpm test       # same packages; core/signer/flashblocks/agent/cli
+```
+
+Foundry tests for the AMM are separate: `cd packages/contracts && forge test`.
 
 ## Troubleshooting
 
 - **`Cannot find module '@husky-agent/...'`** — you skipped `pnpm build` (step
-  2), or edited `core`/`agent`/`signer`/`flashblocks` and need to rebuild. The
-  CLI consumes those packages' compiled `dist/`, not their `src/` — see
-  `06-repo-and-tooling.md`.
+  2), or edited `core`/`signer`/`flashblocks`/`agent` and need to rebuild. The
+  agent consumes those packages' compiled `dist/`, not their `src/`.
+- **`Missing .../.env.testnet. Copy .env.testnet.example to .env.testnet first.`**
+  — step 3 was skipped, or you ran from a directory whose repo root isn't the
+  one holding the file (set `HUSKY_AGENT_ROOT` if so).
+- **`Husky Agent only supports HashKey Chain Testnet (chain ID 133)`** — an
+  exported `HSK_TESTNET_CHAIN_ID` (or one in `.env.testnet`) is not `133`. The
+  agent deliberately refuses any other chain.
 - **`forge script` prints "Some transactions were discarded by the RPC
   node"`** — seen against the real HSK testnet RPC and appears benign (every
   transaction we checked afterward was actually mined). Don't trust the
@@ -135,6 +174,8 @@ that summary is built from.
 - **Speculos won't start** — almost always one of the two setup steps in
   section 5, not a code issue. Confirm `docker ps` works in a *fresh* shell
   first, then confirm `assets/app.elf` is non-empty.
-- **"Speculos isn't running" from the CLI itself** even though the container
-  is up — check `SPECULOS_TRANSPORT_URL` in `.env.testnet` matches the port
-  Speculos actually bound (default `127.0.0.1:40000`).
+- **"Speculos isn't running"** even though the container is up — check
+  `SPECULOS_TRANSPORT_URL` in `.env.testnet` matches the port Speculos actually
+  bound (default `127.0.0.1:40000`).
+- **`node packages/cli/dist/main.js` prints a retirement notice** — expected.
+  `packages/cli` is no longer an entry point; use `pnpm dev`.

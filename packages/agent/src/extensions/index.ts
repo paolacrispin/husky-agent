@@ -2,12 +2,18 @@ import type { ExtensionAPI, InlineExtension } from "@earendil-works/pi-coding-ag
 
 import { registerHuskyBranding } from "./branding.js";
 import { registerHuskyContext } from "./context.js";
-import { registerHuskyPlaceholderTools } from "./placeholder-tools.js";
+import { registerHuskyTools } from "./tools.js";
 
+/**
+ * The whole Husky Agent extension: branding, the transaction-assistant system
+ * prompt, and the deterministic Husky tools. Registered inline by
+ * `src/cli.ts`, so it loads even when Pi's untrusted extension discovery is
+ * disabled (`--no-extensions`).
+ */
 export const huskyExtension = (pi: ExtensionAPI): void => {
   registerHuskyBranding(pi);
   registerHuskyContext(pi);
-  registerHuskyPlaceholderTools(pi);
+  registerHuskyTools(pi);
 };
 
 export const huskyExtensionFactory: InlineExtension = {
@@ -17,4 +23,13 @@ export const huskyExtensionFactory: InlineExtension = {
 
 export { HUSKY_TAGLINE, huskyBrandingLines } from "./branding.js";
 export { HUSKY_SYSTEM_PROMPT } from "./context.js";
-export { huskyPlaceholderTools } from "./placeholder-tools.js";
+export {
+  SwapInput,
+  TransferInput,
+  createHuskyTools,
+  huskyTools,
+  registerHuskyTools,
+  type HuskyOperationsLike,
+  type HuskyToolDetails,
+  type HuskyToolOptions,
+} from "./tools.js";

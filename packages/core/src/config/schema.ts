@@ -11,5 +11,6 @@ export const TokensSchema = z.record(
   z.object({
     address: addressSchema,
     decimals: z.number().int().min(0).max(255),
+    native: z.boolean().optional(),
   }),
 );

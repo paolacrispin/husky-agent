@@ -36,7 +36,7 @@ export const registerHuskyBranding: ExtensionFactory = (pi) => {
   pi.on("session_start", (_event, ctx) => {
     const version = getHuskyAgentVersion();
     ctx.ui.setTitle("husky-agent");
-    ctx.ui.setStatus("husky-agent", `Husky Agent v${version} · adapters pending`);
+    ctx.ui.setStatus("husky-agent", `Husky Agent v${version} · HSK testnet · approval required`);
 
     if (ctx.mode === "tui") {
       ctx.ui.setHeader(() => new Text(huskyBrandingLines(version).join("\n"), 0, 0));
@@ -48,12 +48,12 @@ export const registerHuskyBranding: ExtensionFactory = (pi) => {
   });
 
   pi.registerCommand("about", {
-    description: "Show Husky Agent version, examples, and adapter status.",
+    description: "Show Husky Agent version, supported operations, and approval rules.",
     handler: async (_args, ctx) => {
       ctx.ui.setWidget("husky-agent-about", aboutLines(getHuskyAgentVersion()), {
         placement: "aboveEditor",
       });
-      ctx.ui.notify("Husky Agent is ready; blockchain adapters are not connected yet.", "info");
+      ctx.ui.notify("Husky Agent is ready on HashKey Chain Testnet; every write needs your approval.", "info");
     },
   });
 };

@@ -11,6 +11,16 @@ export const DEFAULT_SLIPPAGE_BPS = 50n; // 0.50%
 const BPS_DENOMINATOR = 10_000n;
 
 export function buildTransfer(resolved: ResolvedTransfer, from: Address): UnsignedTx {
+  if (resolved.token.native) {
+    return {
+      kind: "transfer",
+      to: resolved.recipient,
+      data: "0x",
+      value: resolved.amount,
+      from,
+    };
+  }
+
   return {
     kind: "transfer",
     to: resolved.token.address,

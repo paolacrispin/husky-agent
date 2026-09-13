@@ -92,7 +92,9 @@ the Foundry deploy/seed scripts in `packages/contracts`.
 
 ## Known issue: every contract call needs blind signing
 
-**Status: understood, not fixed. We are proceeding with blind signing enabled.**
+**Status: the custom router remains unresolved; we are proceeding with blind
+signing enabled.** The signer now requests ERC-20 metadata where Ledger's
+registry supports it, but that does not cover this router's swap method.
 
 ### Background
 
@@ -114,7 +116,7 @@ Using the project's own installed `@ledgerhq/hw-app-eth`, four cases:
 
 | # | Transaction | Resolution config | Result |
 |---|---|---|---|
-| A | AMM swap (`0x38ed1739`) | `{}` — *exactly what `ledgerSigner.ts` passes* | empty, and **no network call was attempted** |
+| A | AMM swap (`0x38ed1739`) | `{}` — the signer's **old** config | empty, and **no network call was attempted** |
 | B | AMM swap (`0x38ed1739`) | `erc20`, `nft`, `externalPlugins`, `uniswapV3` all on | empty — `no infos for selector 0x38ed1739` |
 | C | **Mainnet USDC** `transfer` | `{}` | empty |
 | D | **Mainnet USDC** `transfer` | `{ erc20: true }` | `loaded erc20token info … (USDC)` |
@@ -148,11 +150,10 @@ never decoded the swap.
 
 ### Why this is a problem
 
-**1. `resolveTransaction` is currently dead code.** `ledgerSigner.ts` calls it as
-`resolveTransaction(rawTxHex, {}, {})`. That third argument is the resolution
-config and it is empty, so resolution is never attempted — case A shows no
-network request is even made. Even a USDC transfer would resolve to nothing. This
-is a real bug and worth fixing on its own merits.
+**1. The signer now requests token metadata.** `ledgerSigner.ts` calls
+`resolveTransaction(rawTxHex, {}, { erc20: true })`, which allows
+registry-known ERC-20 calls to be clear-signed (case D). The previous empty
+configuration was a bug, but this does not add metadata for the custom router.
 
 **2. Fixing it would not remove blind signing.** Case B shows that with
 everything enabled a swap still resolves to nothing. Two independent reasons: the

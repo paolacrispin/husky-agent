@@ -7,6 +7,14 @@ import type { Signer } from "./types";
 export const DEFAULT_DERIVATION_PATH = "44'/60'/0'/0/0";
 
 /**
+ * Ask Ledger's resolver for ERC-20 metadata before signing. This enables clear
+ * signing for token methods that are present in Ledger's CAL registry. The
+ * custom Husky router is not registered there, so its swap calls still use
+ * the device's blind-signing path (see ledger.md).
+ */
+const RESOLUTION_CONFIG = { erc20: true };
+
+/**
  * Signer backed by a Ledger Ethereum app, over any Transport implementation.
  * The only thing that changes between Speculos and a physical device is the
  * transport passed in here — see createSpeculosSigner / createNodeHidSigner.
@@ -34,9 +42,9 @@ export class LedgerSigner implements Signer {
 
     // Falls back to blind signing (still functional, less user-friendly on
     // the device screen) if resolution/clear-signing metadata can't be
-    // fetched — see docs/05-signing-spec.md open items re: app version.
+    // fetched. The custom Husky router currently has no CAL descriptor.
     const resolution = await ledgerService
-      .resolveTransaction(rawTxHex, {}, {})
+      .resolveTransaction(rawTxHex, {}, RESOLUTION_CONFIG)
       .catch(() => null);
 
     const { r, s, v } = await this.eth.signTransaction(this.path, rawTxHex, resolution);
@@ -50,13 +58,13 @@ export class LedgerSigner implements Signer {
 }
 
 /**
- * hw-app-eth's `signTransaction` types `v` as a plain string, but different
- * app-eth/firmware versions have been observed returning it as either a
- * decimal string ("28") or bare hex ("1c"). NOT verified against a live
- * Speculos instance — see the "confirm Ledger app version" open item in
- * docs/05-signing-spec.md. If signed transactions are rejected as invalid,
- * check this parsing first.
+ * Parse the bare hexadecimal `v` returned by hw-app-eth's `getV` helper.
+ *
+ * `getV` calls `BigNumber#toString(16)`, so a value such as `"10"` means
+ * hexadecimal 0x10 (16), not decimal 10. Keeping this conversion explicit
+ * avoids producing an invalid signature for values whose hex representation
+ * contains digits only.
  */
-function parseLedgerV(v: string): bigint {
-  return /^[0-9]+$/.test(v) ? BigInt(v) : BigInt(`0x${v}`);
+export function parseLedgerV(v: string): bigint {
+  return BigInt(v.toLowerCase().startsWith("0x") ? v : `0x${v}`);
 }
